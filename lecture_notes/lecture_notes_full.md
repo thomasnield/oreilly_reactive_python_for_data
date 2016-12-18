@@ -52,13 +52,13 @@ Received: Epsilon
 Completed!
 ```
 
-## Example 3.1C - Subscribing Shorthand with Lambdas
+## Example 4.1C - Subscribing Shorthand with Lambdas
 
 Implementing a `Subscriber` is a bit verbose, so we also have the option of passing more concise lambda arguemnts to the `subscribe()` function. Then it will use those lambas to create the `Subscriber` for us.
 
 ```python
 from rx import Observable
-31
+
 letters = Observable.from_(["Alpha","Beta","Gamma","Delta","Epsilon"])
 
 letters.subscribe(on_next = lambda value: print(value),
@@ -120,7 +120,7 @@ Observable.from_(["Alpha","Beta","Gamma","Delta","Epsilon"]) \
 
 > If you are using an IDE like PyCharm, operators like `filter()` and `map()` will unfortunately not be available for auto-complete. The reason is RxPy will add these operators to the `Observable` at runtime. For PyCharm, you may want to disable _Unresolved References_ under _Settings -> Editor -> Inspection -> Python_ so you do not get any warnings.
 
-## 4.2B Using Observable.range()
+## 4.2B Using Observable.range() and Observable.just()
 
 There are other ways to create an `Observable`. For instance, you can emit a range of numbers:
 
@@ -163,7 +163,7 @@ greeting.subscribe(lambda value: print(value))
 Received: Hello World!
 ```
 
-# 3.2C - Using Observable.empty()
+# 4.2C - Using Observable.empty()
 
 You can also create an `Observable` that emits nothing and call `on_completed()` immediately via `Observable.empty()`. While this may not seem useful, an empty `Observable` is the reactive equivalent to `None`, `null`, or an empty collection so you will encounter it.
 
@@ -182,7 +182,7 @@ Observable.empty() \
 Done!
 ```
 
-# 3.3A - Creating an Observable from Scratch
+# 4.3A - Creating an Observable from Scratch
 
 You can also create an `Observable` source from scratch. Using `Observable.create()`. you can pass a function with an `observer` argument, and call it's `on_next()`, `on_completed()`, and `on_error()` to pass items or events to the `Subscriber` or the next operator in the chain.
 
@@ -243,7 +243,7 @@ Notice how the `Observable` in fact has a notion of time? It is emitting an inte
 
 Note also we had to use `input()` to make the main thread pause until the user presses a key. If we did not do this, the `Observable.interval()` would not have a chance to fire because the application will exit. The reason for this is the `Observable.interval()` has to operate on a separate thread and create a separate workstream driven by a timer. The Python code will finish and terminate before it has a chance to fire.
 
-# 3.3C - Unsubscribing from an Observable
+# 4.3C - Unsubscribing from an Observable
 
 When you `subscribe()` to an `Observable` it returns a `Disposable` so you can disconnect the `Subscriber` from the `Observable` at any time.
 
@@ -278,7 +278,7 @@ Unsubscribing!
 
 Unsubscribing/disposing is usually not necessary for Observables that are finite and quick (they will unsubscribe themselves), but it can be necessary for long-running or infinite Observables.
 
-# 3.4 - An Observable emitting Tweets
+# 4.4 - An Observable emitting Tweets
 
 Later we will learn how to create Observables that emit Tweets for a given topic, but here is a preview of what's to come. Using Tweepy and `Observable.create()`, we can create a function that yields an `Observable` emitting Tweets for specified topics. For instance, here is how to get a live stream of text bodies from Tweets for "Britain" and "France".
 
@@ -398,6 +398,8 @@ Here are some operators that can be helpful for supressing emissions that fail t
 You have already seen the `filter()`. It supresses emissions that fail to meet a condition specified by you. For instance, only allowing emissions forward that are at least length 5.
 
 ```python
+from rx import Observable
+
 Observable.from_(["Alpha","Beta","Gamma","Delta","Epsilon"]) \
     .filter(lambda s: len(s) >= 5) \
     .subscribe(lambda s: print(s))
@@ -419,6 +421,8 @@ Epsilon
 You can also use `take()` to cut off at a certain number of emissions and call `on_completed()`. For instance, calling `take(2)` like below will only allow the first two emissions coming out of the `filter()` to come through.
 
 ```python
+from rx import Observable
+
 Observable.from_(["Alpha","Beta","Gamma","Delta","Epsilon"]) \
     .filter(lambda s: len(s) >= 5) \
     .take(2) \
@@ -469,7 +473,7 @@ Observable.from_([2,5,21,5,2,1,5,63,127,12]) \
 When the `127` is encountered, the `take_while()` specified as above with the condition `i < 100` will trigger `on_completed()` to be called to the `Subscriber`, and unsubscription will prevent any more emissions from occurring.
 
 
-# 4.2 Distinct Operators
+# 5.2 Distinct Operators
 
 ## 5.2A `distinct()`
 
@@ -555,7 +559,7 @@ Gamma
 Epsilon
 ```
 
-# 4.3 Aggregating Operators
+# 5.3 Aggregating Operators
 
 When working with data, there will be many instances where we want to consolidate emissions into a single emission to reflect some form of an aggregated result.
 
@@ -631,7 +635,7 @@ Observable.from_([4,76,22,66,881,13,35]) \
 Each accumulation is emitted every time an emission is added to our running total. We start with `4`, then `4` + `76` which is `80`, then `80` + `22` which is `102`, etc...
 
 
-# 4.4 Collecting Operators
+# 5.4 Collecting Operators
 
 You can consolidate emissions by collecting them into a `List` or `Dict`, and then pushing that collection forward as a single emission.
 
@@ -960,12 +964,13 @@ input("Press any key to quit\n")
 Note that `zip()` can get overwhelmed with infinite hot Observables where one produces emissions faster than another. You might want to consider using `combine_latest()` or `with_latest_from()` instead of `zip()`, which will pair with the latest emission from each source. For the sake of brevity, we will not cover this in this course. But you can read more about it in the ReactiveX documentation.
 
 
-# 6.4 group_by
+# 6.4 - Group By
 
 For the purposes of data science, one of the most powerful operators in ReactiveX is `group_by()`. It will yield an Observable emitting GroupedObservables, where each `GroupedObservable` pushes items with a given key. It behaves just like any other `Observable`, but it has a `key` property which we will leverage in a moment.
 
 But first, let's group some `String` emissions by keying on their lengths. Then let's collect emissions for each grouping into a `List`. Then we can call `flat_map()` to yield all the Lists.
 
+## 6.4A - Group into Lists
 
 ```python
 from rx import Observable
@@ -989,6 +994,8 @@ Observable.from_(items) \
 `group_by()` is efficient because it is still 100% reactive and pushing items one-at-a-time through the different GroupedObservables. You can also leverage the `key` property and tuple it up with an aggregated value. This is helpful if you want to create `Dict` that holds aggregations by key values.
 
 For instance, if you want to find the count of each word length occurrence, you can create a `Dict` like this:
+
+## 6.4B - Getting Length Counts
 
 ```python
 from rx import Observable
@@ -1923,297 +1930,3 @@ Received Alpha on Thread-2
 
 
 Using `switch_map()` is a convenient way to cancel current work when new work comes in, rather than queuing up work. This is desirable if you are only concerned with the latest data or want to cancel obsolete processing. If you are scraping web data on a schedule using `Observable.interval()`, but a scrape instance takes too long and a new scrape requests comes in, you can cancel that scrape and start the next one.
-# Appendix
-
-## 1 - Deferred Observables
-
-A behavior to be aware of with `Observable.from_()` and other functions that create Observables is they may not reflect changes that happen to their sources, such as a `List`.
-
-If we build an `Observable` off a `List`, `subscribe` to it, add "Delta", then `subscribe()` again, we will not see that "Delta" item emitted.
-
-```python
-from rx import Observable
-
-items = ["Alpha", "Beta", "Gamma"]
-source = Observable.from_(items)
-
-source.subscribe(lambda s: print(s))
-
-print("\nAdding Delta!\n")
-items.append("Delta")
-
-source.subscribe(lambda s: print(s))
-```
-
-**OUTPUT:**
-
-```
-Alpha
-Beta
-Gamma
-
-Adding Delta!
-
-Alpha
-Beta
-Gamma
-Delta
-```
-
-Using `Observable.defer()` allows you to create a new `Observable` from scratch each time it is subscribed, and therefore capturing anything that might have changed about its source.
-
-```python
-from rx import Observable
-
-items = ["Alpha", "Beta", "Gamma"]
-source = Observable.defer(lambda: Observable.from_(items))
-
-source.subscribe(lambda s: print(s))
-
-print("\nAdding Delta!\n")
-items.append("Delta")
-
-source.subscribe(lambda s: print(s))
-```
-
-**OUTPUT:**
-
-```
-Alpha
-Beta
-Gamma
-
-Adding Delta!
-
-Alpha
-Beta
-Gamma
-Delta
-```
-
-The lambda argument ensures the `Observable` source declaration is rebuilt each time it is subscribed to. This is especially helpful to use with data sources that can only be iterated once, as opposed to calling a helper function for each Subscriber (this was covered in Section VII):
-
-```python
-
-def get_all_customers():
-    stmt = text("SELECT * FROM CUSTOMER")
-    return Observable.from_(conn.execute(stmt))
-```
-
-We can actually create an `Obserable` that is truly reusable for multiple Subscribers.
-
-```python
-stmt = text("SELECT * FROM CUSTOMER")
-
-# Will suppport multiple subscribers and coldly replay to each one
-all_customers =  Observable.defer(lambda: Observable.from_(conn.execute(stmt)))
-```
-
-
-## 2 - Debugging with `do_action()`
-
-A helpful operator that provides insight into any point in the `Observable` chain is the `do_action()`. This essentially allows us to insert a `Subscriber` after any operator we want, and pass one or more of `on_next()`, `on_completed()`, and `on_error()` actions.
-
-```python
-from rx import Observable
-
-Observable.from_(["Alpha", "Beta", "Gamma", "Delta", "Epsilon"]) \
-    .map(lambda s: len(s)) \
-    .do_action(on_next=lambda i: print("Receiving {0} from map()".format(i)),
-               on_completed=lambda: print("map() is done!")) \
-    .to_list() \
-    .subscribe(on_next=lambda l: print("Subscriber received {0}".format(l)),
-               on_completed=lambda: print("Subscriber done!"))
-
-```
-
-**OUTPUT:**
-
-```
-Receiving 5 from map()
-Receiving 4 from map()
-Receiving 5 from map()
-Receiving 5 from map()
-Receiving 7 from map()
-map() is done!
-Subscriber received [5, 4, 5, 5, 7]
-Subscriber done!
-```
-
-Above, we declare a `do_action` right after the `map()` operation emitting the lengths. We print each length emission before it goes to the `to_list()`. Finally, `on_completed` is called and prints a notification that `map()` is not giving any more items. Then it pushes the completion event to the `to_list()` which then pushes the `List` to the `Subscriber`. Then `to_list()` calls `on_completed()` up to the `Subscriber` _after_ the `List` is emitted.
-
-Use `do_action()` when you need to "peek" inside any point in the `Observable` chain, either for debugging or quickly call actions at that point.
-
-## 3 - Subjects
-
-Another way to create an `Observable` is by declaring a `Subject`. A `Subject` is both an `Observable` and `Observer`, and you can call its `Observer` functions to push items through it and up to any Subscribers at any time.
-
-```python
-from rx.subjects import Subject
-
-subject = Subject()
-
-subject.filter(lambda i: i < 100) \
-    .map(lambda i: i * 1000) \
-    .subscribe(lambda i: print(i))
-
-subject.on_next(10)
-subject.on_next(50)
-subject.on_next(105)
-subject.on_next(87)
-
-subject.on_completed()
-```
-
-**OUTPUT:**
-
-```
-10000
-50000
-87000
-```
-
-While they seem convenient, Subjects are often discouraged from being used. They can easily encourage antipatterns and are prone to abuse. They also are difficult to compose against and do not respect `subscribe_on()`. It is better to create Observables that strictly come from one defined source, rather than be openly mutable and have anything push items to it at anytime. Use Subjects with discretion.
-
-## 4. Error Recovery
-
-There are a number of error recovery operators, but we will cover two helpful ones. Say you have an `Observable` operation that will ultimately attempt to divide by zero and therefore throw an error.
-
-```python
-from rx import Observable
-
-Observable.from_([5, 6, 2, 0, 1, 35]) \
-    .map(lambda i: 5 / i) \
-    .subscribe(on_next=lambda i: print(i), on_error=lambda e: print(e))
-```
-
-**OUTPUT:**
-
-```
-1.0
-0.8333333333333334
-2.5
-division by zero
-```
-
-There are multiple ways to handle this. Of course, the best way is to be proactive and use `filter()` to hold back any `0` value emissions. But for the sake of example, let's say we did not expect this error and we want a way to handle any errors we have not considered.
-
-One way is to use `on_error_resume_next()` which will switch to an alternate `Observable` source in the event there is an error. This is somewhat contrived, but if we encounter an error we can switch to emitting an `Observable.range()`.
-
-```python
-from rx import Observable
-
-Observable.from_([5, 6, 2, 0, 1, 35]) \
-    .map(lambda i: 5 / i) \
-    .on_error_resume_next(Observable.range(1,10)) \
-    .subscribe(on_next=lambda i: print(i), on_error=lambda e: print(e))
-```
-
-**OUTPUT:**
-
-```
-1.0
-0.8333333333333334
-2.5
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-```
-
-It probably would be more realistic to pass an `Observable.empty()` instead to simply stop emissions once an error happens.
-
-```python
-from rx import Observable
-
-Observable.from_([5, 6, 2, 0, 1, 35]) \
-    .map(lambda i: 5 / i) \
-    .on_error_resume_next(Observable.empty()) \
-    .subscribe(on_next=lambda i: print(i), on_error=lambda e: print(e))
-```
-
-**OUTPUT:**
-
-```
-1.0
-0.8333333333333334
-2.5
-```
-
-Although this is not a good example to use it, you can also use `retry()` to re-attempt subscribing to the `Observable` and hope the next set of emissions are successful without error. You typically should pass an integer argument to specify the number of retry attempts before it gives up and lets the error go to the `Subscriber`. If you do not, it will retry an infinite number of times.
-
-```python
-from rx import Observable
-
-Observable.from_([5, 6, 2, 0, 1, 35]) \
-    .map(lambda i: 5 / i) \
-    .retry(3) \
-    .subscribe(on_next=lambda i: print(i), on_error=lambda e: print(e))
-```
-
-**OUTPUT:**
-
-```
-1.0
-0.8333333333333334
-2.5
-1.0
-0.8333333333333334
-2.5
-1.0
-0.8333333333333334
-2.5
-division by zero
-```
-
-You can also use this in combination with the `delay()` operator to hold off subscribing for a fixed time period, which can be helpful for intermittent connectivity problems.
-
-
-## 5. combine_latest()
-
-There is one operation for merging multiple Observables together we did not cover: `combine_latest()`. It behaves much like `zip()` but will only combine the _latest_ emissions for each source in the event one of them emits something. This is helpful for hot event sources especially, such as user inputs in a UI, where do you not care what the previous emissions are.
-
-Below, we have two interval sources put in `combine_latest()`: `source1` emitting every 3 seconds and `source2` every 1 second. Notice that `source2` is going to emit a lot faster, but rather than get queued up like in `zip()` waiting for an emission from `source1`, it is going to pair with only the latest emission from `source1`. It is not going to wait for any emission to be zipped with. Conversely, when `source1` does emit something it is going to pair with the latest emission from `source2`, not wait for an emission.
-
-
-```python
-from rx import Observable
-
-source1 = Observable.interval(3000).map(lambda i: "SOURCE 1: {0}".format(i))
-source2 = Observable.interval(1000).map(lambda i: "SOURCE 2: {0}".format(i))
-
-Observable.combine_latest(source1, source2, lambda s1,s2: "{0}, {1}".format(s1,s2)) \
-    .subscribe(lambda s: print(s))
-
-input("Press any key to quit\n")
-```
-
-**OUTPUT:**
-
-```
-Press any key to quit
-SOURCE 1: 0, SOURCE 2: 1
-SOURCE 1: 0, SOURCE 2: 2
-SOURCE 1: 0, SOURCE 2: 3
-SOURCE 1: 0, SOURCE 2: 4
-SOURCE 1: 1, SOURCE 2: 4
-SOURCE 1: 1, SOURCE 2: 5
-SOURCE 1: 1, SOURCE 2: 6
-SOURCE 1: 1, SOURCE 2: 7
-SOURCE 1: 2, SOURCE 2: 7
-SOURCE 1: 2, SOURCE 2: 8
-SOURCE 1: 2, SOURCE 2: 9
-SOURCE 1: 2, SOURCE 2: 10
-SOURCE 1: 3, SOURCE 2: 10
-SOURCE 1: 3, SOURCE 2: 11
-SOURCE 1: 3, SOURCE 2: 12
-SOURCE 1: 3, SOURCE 2: 13
-```
-
-Again, this is a helpful alternative for `zip()` if you want to emit the _latest combinations_ from two or more Observables.
