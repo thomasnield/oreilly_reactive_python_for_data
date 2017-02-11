@@ -243,7 +243,90 @@ Notice how the `Observable` in fact has a notion of time? It is emitting an inte
 
 Note also we had to use `input()` to make the main thread pause until the user presses a key. If we did not do this, the `Observable.interval()` would not have a chance to fire because the application will exit. The reason for this is the `Observable.interval()` has to operate on a separate thread and create a separate workstream driven by a timer. The Python code will finish and terminate before it has a chance to fire.
 
-# 4.3C - Unsubscribing from an Observable
+
+# 4.3C - Using Observable.defer()
+
+**WEBCAST ONLY**
+
+A behavior to be aware of with `Observable.from_()` and other functions that create Observables is they may not reflect changes that happen to their sources.
+
+For instance, if have an `Observable.range()` built off two variables `x` and `y`, and one of the variables changes later, this change will not be captured by the source.
+
+```python
+1
+2
+3
+4
+5
+
+Setting y = 10
+
+1
+2
+3
+4
+5
+
+```
+
+**OUTPUT:**
+
+```
+Alpha
+Beta
+Gamma
+
+Adding Delta!
+
+Alpha
+Beta
+Gamma
+Delta
+```
+
+Using `Observable.defer()` allows you to create a new `Observable` from scratch each time it is subscribed, and therefore capturing anything that might have changed about its source. Just supply how to create the `Observable` through a lambda.
+
+```python
+from rx import Observable
+
+x = 1
+y = 5
+
+integers = Observable.defer(lambda: Observable.range(x, y))
+integers.subscribe(lambda i: print(i))
+
+print("\nSetting y = 10\n")
+y = 10
+
+integers.subscribe(lambda i: print(i))
+```
+
+**OUTPUT:**
+
+```
+1
+2
+3
+4
+5
+
+Setting y = 10
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+```
+
+The lambda argument ensures the `Observable` source declaration is rebuilt each time it is subscribed to.
+
+# 4.3D - Unsubscribing from an Observable
 
 When you `subscribe()` to an `Observable` it returns a `Disposable` so you can disconnect the `Subscriber` from the `Observable` at any time.
 
@@ -459,7 +542,7 @@ Epsilon
 
 ## 5.1C `take_while()`
 
-`take_while()` and `take_until()` will keep passing emissions based on a condition. For instance if we have an `Observable` emitting some integers, we can keep taking integers while they are less than 100. We can achieve this using a `take_while()`.
+`take_while()` will keep passing emissions based on a condition. For instance if we have an `Observable` emitting some integers, we can keep taking integers while they are less than 100. We can achieve this using a `take_while()`.
 
 ```python
 from rx import Observable
@@ -1474,6 +1557,7 @@ Subscriber 1: 5
 Subscriber 2: 5
 ```
 
+
 ## 8.1C - Autoconnecting
 
 We can have our `ConnectableObservable` automatically `connect()` itself when it gets a Subscriber by calling `ref_count()` on it.
@@ -1504,6 +1588,124 @@ Again, multicasting is helpful when you want all Subscribers to receive the same
 and prevent redundant, expensive work for each Subscriber.
 
 
+## 8.2D - Multicasting Specific Points (Webcast Only)
+
+The placement of the mutlicasting matters. For instance, if you map three emissions to three random integers, but multicast _before_ the `map()` operation, two subscribers will both receive separate random integers.
+
+```python
+from rx import Observable
+from random import randint
+
+
+three_emissions = Observable.range(1, 3).publish()
+
+three_random_ints = three_emissions.map(lambda i: randint(1, 100000))
+
+three_random_ints.subscribe(lambda i: print("Subscriber 1 Received: {0}".format(i)))
+three_random_ints.subscribe(lambda i: print("Subscriber 2 Received: {0}".format(i)))
+
+three_emissions.connect()
+```
+
+**OUTPUT:**
+
+```
+Subscriber 1 Received: 56976
+Subscriber 1 Received: 882
+Subscriber 1 Received: 59873
+Subscriber 2 Received: 12911
+Subscriber 2 Received: 47631
+Subscriber 2 Received: 84640
+```
+
+
+However, putting the `publish()` _after_ the `map()` operation, both subscribers will receive the same emissions.
+
+```python
+from rx import Observable
+from random import randint
+
+
+three_emissions = Observable.range(1, 3)
+
+three_random_ints = three_emissions.map(lambda i: randint(1, 100000)).publish()
+
+three_random_ints.subscribe(lambda i: print("Subscriber 1 Received: {0}".format(i)))
+three_random_ints.subscribe(lambda i: print("Subscriber 2 Received: {0}".format(i)))
+
+three_random_ints.connect()
+```
+
+**OUTPUT:**
+
+```
+Subscriber 1 Received: 17500
+Subscriber 2 Received: 17500
+Subscriber 1 Received: 71398
+Subscriber 2 Received: 71398
+Subscriber 1 Received: 90457
+Subscriber 2 Received: 90457
+```
+
+Therefore, note that most operators will create a separate stream for each subscriber, even if upstream there is a mutlicasting operation. Typically, you multicast up to the point where operations are common to both subscribers. For instance, if one subscriber simply printed each random number while the second subscriber performed a sum on them, the multcasting will happen before the summing operation since that is where digressive operations occur.
+
+```python
+from rx import Observable
+from random import randint
+
+
+three_emissions = Observable.range(1, 3)
+
+three_random_ints = three_emissions.map(lambda i: randint(1, 100000)).publish()
+
+three_random_ints.subscribe(lambda i: print("Subscriber 1 Received: {0}".format(i)))\
+
+three_random_ints.reduce(lambda total, item: total + item) \
+    .subscribe(lambda i: print("Subscriber 2 Received: {0}".format(i)))
+
+three_random_ints.connect()
+```
+
+**OUTPUT:***
+
+```
+Subscriber 1 Received: 17618
+Subscriber 1 Received: 66227
+Subscriber 1 Received: 36159
+Subscriber 2 Received: 120004
+```
+
+
+## 8.2E - Subjects (Webcast Only)
+
+Another way to create a kmutlicasted `Observable` is by declaring a `Subject`. A `Subject` is both an `Observable` and `Observer`, and you can call its `Observer` functions to push items through it and up to any Subscribers at any time. It will push these items to all subscribers.
+
+```python
+from rx.subjects import Subject
+
+subject = Subject()
+
+subject.filter(lambda i: i < 100) \
+    .map(lambda i: i * 1000) \
+    .subscribe(lambda i: print(i))
+
+subject.on_next(10)
+subject.on_next(50)
+subject.on_next(105)
+subject.on_next(87)
+
+subject.on_completed()
+```
+
+**OUTPUT:**
+
+```
+10000
+50000
+87000
+```
+
+While they seem convenient, Subjects are often discouraged from being used. They can easily encourage antipatterns and are prone to abuse. They also are difficult to compose against and do not respect `subscribe_on()`. It is better to create Observables that strictly come from one defined source, rather than be openly mutable and have anything push items to it at anytime. Use Subjects with discretion.
 
 ## 8.2 - Querying Live Twitter Feeds
 
@@ -1930,3 +2132,309 @@ Received Alpha on Thread-2
 
 
 Using `switch_map()` is a convenient way to cancel current work when new work comes in, rather than queuing up work. This is desirable if you are only concerned with the latest data or want to cancel obsolete processing. If you are scraping web data on a schedule using `Observable.interval()`, but a scrape instance takes too long and a new scrape requests comes in, you can cancel that scrape and start the next one.
+# Appendix
+
+## 1 - Deferred Observables
+
+A behavior to be aware of with `Observable.from_()` and other functions that create Observables is they may not reflect changes that happen to their sources.
+
+For instance, if have an `Observable.range()` built off two variables `x` and `y`, and one of the variables changes later, this change will not be captured by the source.
+
+```python
+1
+2
+3
+4
+5
+
+Setting y = 10
+
+1
+2
+3
+4
+5
+
+```
+
+**OUTPUT:**
+
+```
+Alpha
+Beta
+Gamma
+
+Adding Delta!
+
+Alpha
+Beta
+Gamma
+Delta
+```
+
+Using `Observable.defer()` allows you to create a new `Observable` from scratch each time it is subscribed, and therefore capturing anything that might have changed about its source. Just supply how to create the `Observable` through a lambda.
+
+```python
+from rx import Observable
+
+x = 1
+y = 5
+
+integers = Observable.defer(lambda: Observable.range(x, y))
+integers.subscribe(lambda i: print(i))
+
+print("\nSetting y = 10\n")
+y = 10
+
+integers.subscribe(lambda i: print(i))
+```
+
+**OUTPUT:**
+
+```
+1
+2
+3
+4
+5
+
+Setting y = 10
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+```
+
+The lambda argument ensures the `Observable` source declaration is rebuilt each time it is subscribed to. This is especially helpful to use with data sources that can only be iterated once, as opposed to calling a helper function for each Subscriber (this was covered in Section VII):
+
+```python
+
+def get_all_customers():
+    stmt = text("SELECT * FROM CUSTOMER")
+    return Observable.from_(conn.execute(stmt))
+```
+
+We can actually create an `Obserable` that is truly reusable for multiple Subscribers.
+
+```python
+stmt = text("SELECT * FROM CUSTOMER")
+
+# Will suppport multiple subscribers and coldly replay to each one
+all_customers =  Observable.defer(lambda: Observable.from_(conn.execute(stmt)))
+```
+
+
+## 2 - Debugging with `do_action()`
+
+A helpful operator that provides insight into any point in the `Observable` chain is the `do_action()`. This essentially allows us to insert a `Subscriber` after any operator we want, and pass one or more of `on_next()`, `on_completed()`, and `on_error()` actions.
+
+```python
+from rx import Observable
+
+Observable.from_(["Alpha", "Beta", "Gamma", "Delta", "Epsilon"]) \
+    .map(lambda s: len(s)) \
+    .do_action(on_next=lambda i: print("Receiving {0} from map()".format(i)),
+               on_completed=lambda: print("map() is done!")) \
+    .to_list() \
+    .subscribe(on_next=lambda l: print("Subscriber received {0}".format(l)),
+               on_completed=lambda: print("Subscriber done!"))
+
+```
+
+**OUTPUT:**
+
+```
+Receiving 5 from map()
+Receiving 4 from map()
+Receiving 5 from map()
+Receiving 5 from map()
+Receiving 7 from map()
+map() is done!
+Subscriber received [5, 4, 5, 5, 7]
+Subscriber done!
+```
+
+Above, we declare a `do_action` right after the `map()` operation emitting the lengths. We print each length emission before it goes to the `to_list()`. Finally, `on_completed` is called and prints a notification that `map()` is not giving any more items. Then it pushes the completion event to the `to_list()` which then pushes the `List` to the `Subscriber`. Then `to_list()` calls `on_completed()` up to the `Subscriber` _after_ the `List` is emitted.
+
+Use `do_action()` when you need to "peek" inside any point in the `Observable` chain, either for debugging or quickly call actions at that point.
+
+## 3 - Subjects
+
+Another way to create an `Observable` is by declaring a `Subject`. A `Subject` is both an `Observable` and `Observer`, and you can call its `Observer` functions to push items through it and up to any Subscribers at any time.
+
+```python
+from rx.subjects import Subject
+
+subject = Subject()
+
+subject.filter(lambda i: i < 100) \
+    .map(lambda i: i * 1000) \
+    .subscribe(lambda i: print(i))
+
+subject.on_next(10)
+subject.on_next(50)
+subject.on_next(105)
+subject.on_next(87)
+
+subject.on_completed()
+```
+
+**OUTPUT:**
+
+```
+10000
+50000
+87000
+```
+
+While they seem convenient, Subjects are often discouraged from being used. They can easily encourage antipatterns and are prone to abuse. They also are difficult to compose against and do not respect `subscribe_on()`. It is better to create Observables that strictly come from one defined source, rather than be openly mutable and have anything push items to it at anytime. Use Subjects with discretion.
+
+## 4. Error Recovery
+
+There are a number of error recovery operators, but we will cover two helpful ones. Say you have an `Observable` operation that will ultimately attempt to divide by zero and therefore throw an error.
+
+```python
+from rx import Observable
+
+Observable.from_([5, 6, 2, 0, 1, 35]) \
+    .map(lambda i: 5 / i) \
+    .subscribe(on_next=lambda i: print(i), on_error=lambda e: print(e))
+```
+
+**OUTPUT:**
+
+```
+1.0
+0.8333333333333334
+2.5
+division by zero
+```
+
+There are multiple ways to handle this. Of course, the best way is to be proactive and use `filter()` to hold back any `0` value emissions. But for the sake of example, let's say we did not expect this error and we want a way to handle any errors we have not considered.
+
+One way is to use `on_error_resume_next()` which will switch to an alternate `Observable` source in the event there is an error. This is somewhat contrived, but if we encounter an error we can switch to emitting an `Observable.range()`.
+
+```python
+from rx import Observable
+
+Observable.from_([5, 6, 2, 0, 1, 35]) \
+    .map(lambda i: 5 / i) \
+    .on_error_resume_next(Observable.range(1,10)) \
+    .subscribe(on_next=lambda i: print(i), on_error=lambda e: print(e))
+```
+
+**OUTPUT:**
+
+```
+1.0
+0.8333333333333334
+2.5
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+```
+
+It probably would be more realistic to pass an `Observable.empty()` instead to simply stop emissions once an error happens.
+
+```python
+from rx import Observable
+
+Observable.from_([5, 6, 2, 0, 1, 35]) \
+    .map(lambda i: 5 / i) \
+    .on_error_resume_next(Observable.empty()) \
+    .subscribe(on_next=lambda i: print(i), on_error=lambda e: print(e))
+```
+
+**OUTPUT:**
+
+```
+1.0
+0.8333333333333334
+2.5
+```
+
+Although this is not a good example to use it, you can also use `retry()` to re-attempt subscribing to the `Observable` and hope the next set of emissions are successful without error. You typically should pass an integer argument to specify the number of retry attempts before it gives up and lets the error go to the `Subscriber`. If you do not, it will retry an infinite number of times.
+
+```python
+from rx import Observable
+
+Observable.from_([5, 6, 2, 0, 1, 35]) \
+    .map(lambda i: 5 / i) \
+    .retry(3) \
+    .subscribe(on_next=lambda i: print(i), on_error=lambda e: print(e))
+```
+
+**OUTPUT:**
+
+```
+1.0
+0.8333333333333334
+2.5
+1.0
+0.8333333333333334
+2.5
+1.0
+0.8333333333333334
+2.5
+division by zero
+```
+
+You can also use this in combination with the `delay()` operator to hold off subscribing for a fixed time period, which can be helpful for intermittent connectivity problems.
+
+
+## 5. combine_latest()
+
+There is one operation for merging multiple Observables together we did not cover: `combine_latest()`. It behaves much like `zip()` but will only combine the _latest_ emissions for each source in the event one of them emits something. This is helpful for hot event sources especially, such as user inputs in a UI, where do you not care what the previous emissions are.
+
+Below, we have two interval sources put in `combine_latest()`: `source1` emitting every 3 seconds and `source2` every 1 second. Notice that `source2` is going to emit a lot faster, but rather than get queued up like in `zip()` waiting for an emission from `source1`, it is going to pair with only the latest emission from `source1`. It is not going to wait for any emission to be zipped with. Conversely, when `source1` does emit something it is going to pair with the latest emission from `source2`, not wait for an emission.
+
+
+```python
+from rx import Observable
+
+source1 = Observable.interval(3000).map(lambda i: "SOURCE 1: {0}".format(i))
+source2 = Observable.interval(1000).map(lambda i: "SOURCE 2: {0}".format(i))
+
+Observable.combine_latest(source1, source2, lambda s1,s2: "{0}, {1}".format(s1,s2)) \
+    .subscribe(lambda s: print(s))
+
+input("Press any key to quit\n")
+```
+
+**OUTPUT:**
+
+```
+Press any key to quit
+SOURCE 1: 0, SOURCE 2: 1
+SOURCE 1: 0, SOURCE 2: 2
+SOURCE 1: 0, SOURCE 2: 3
+SOURCE 1: 0, SOURCE 2: 4
+SOURCE 1: 1, SOURCE 2: 4
+SOURCE 1: 1, SOURCE 2: 5
+SOURCE 1: 1, SOURCE 2: 6
+SOURCE 1: 1, SOURCE 2: 7
+SOURCE 1: 2, SOURCE 2: 7
+SOURCE 1: 2, SOURCE 2: 8
+SOURCE 1: 2, SOURCE 2: 9
+SOURCE 1: 2, SOURCE 2: 10
+SOURCE 1: 3, SOURCE 2: 10
+SOURCE 1: 3, SOURCE 2: 11
+SOURCE 1: 3, SOURCE 2: 12
+SOURCE 1: 3, SOURCE 2: 13
+```
+
+Again, this is a helpful alternative for `zip()` if you want to emit the _latest combinations_ from two or more Observables.
