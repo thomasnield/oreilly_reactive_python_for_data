@@ -16,7 +16,7 @@ def recursive_files_in_directory(folder):
     return Observable.create(emit_files_recursively)
 
 
-recursive_files_in_directory('/home/thomas/Desktop/bbc') \
+recursive_files_in_directory('/home/thomas/Desktop/bbc_data_sets') \
     .filter(lambda f: f.endswith('.txt')) \
     .flat_map(lambda f:  Observable.from_(open(f, encoding="ISO-8859-1"))) \
     .map(lambda l: l.strip()) \
