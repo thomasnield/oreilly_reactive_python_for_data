@@ -1183,6 +1183,67 @@ Delaware
 
 In the map we have to decode the bytes and convert them to UTF-8 Strings. Then we also clean leading and trailing whitespace with `strip()`. then finally we print each line.
 
+## 7.1C (Webcast Only) Recursively Iterating Files in Directories
+
+You can use Rx to do powerful recursion patterns to iterate files. You can download and unzip a BBC article datset for this example here, with thousands of articles in text file format: http://mlg.ucd.ie/datasets/bbc.html
+
+
+```python
+from rx import Observable
+import os
+
+
+def recursive_files_in_directory(folder):
+
+    def emit_files_recursively(observer):
+        for root, directories, filenames in os.walk(folder):
+            for directory in directories:
+                observer.on_next(os.path.join(root, directory))
+            for filename in filenames:
+                observer.on_next(os.path.join(root, filename))
+
+        observer.on_completed()
+
+    return Observable.create(emit_files_recursively)
+
+
+recursive_files_in_directory('/home/thomas/Desktop/bbc_data_sets') \
+    .filter(lambda f: f.endswith('.txt')) \
+    .subscribe(on_next=lambda l: print(l), on_error=lambda e: print(e))
+
+```
+
+
+You can iterate files through a directory and any nested directories, filter only for files you are interested in (such as .txt files), and then emit the lines from all the files.
+
+
+```python
+from rx import Observable
+import os
+
+
+def recursive_files_in_directory(folder):
+
+    def emit_files_recursively(observer):
+        for root, directories, filenames in os.walk(folder):
+            for directory in directories:
+                observer.on_next(os.path.join(root, directory))
+            for filename in filenames:
+                observer.on_next(os.path.join(root, filename))
+
+        observer.on_completed()
+
+    return Observable.create(emit_files_recursively)
+
+
+recursive_files_in_directory('/home/thomas/Desktop/bbc') \
+    .filter(lambda f: f.endswith('.txt')) \
+    .flat_map(lambda f:  Observable.from_(open(f, encoding="ISO-8859-1"))) \
+    .map(lambda l: l.strip()) \
+    .filter(lambda l: l != "") \
+    .subscribe(on_next=lambda l: print(l), on_error=lambda e: print(e))
+
+```
 
  ## 7.2 - Reading a SQL Query
 
