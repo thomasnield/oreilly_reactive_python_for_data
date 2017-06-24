@@ -244,9 +244,7 @@ Notice how the `Observable` in fact has a notion of time? It is emitting an inte
 Note also we had to use `input()` to make the main thread pause until the user presses a key. If we did not do this, the `Observable.interval()` would not have a chance to fire because the application will exit. The reason for this is the `Observable.interval()` has to operate on a separate thread and create a separate workstream driven by a timer. The Python code will finish and terminate before it has a chance to fire.
 
 
-# 4.3C - Using Observable.defer()
-
-**WEBCAST ONLY**
+# 4.3C - Using Observable.defer() (EXTRA)
 
 A behavior to be aware of with `Observable.from_()` and other functions that create Observables is they may not reflect changes that happen to their sources.
 
@@ -770,20 +768,10 @@ Observable.from_(["Alpha", "Beta", "Gamma", "Delta", "Epsilon"]) \
     .subscribe(lambda i: print(i))
 ```
 
-**OUTPUT:**
 
-```
-{'A': 5, 'B': 4, 'D': 5, 'G': 5, 'E': 7}
-``
-# Section VI - Combining Observables
-
-We can combine multiple Observables into a single `Observable`, and bring their emissions together in various ways.
-
-# 6.1 Merge
-
-We can merge two or more Observables using the `Observable.merge()` function, and this will yield a new `Observable` pushing emissions from all of them.
 
 ## 6.1A - Observable.merge()
+
 
 ```python
 from rx import Observable
@@ -1103,6 +1091,8 @@ Observable.from_(items) \
 You can interpret the returned `Dict` above as "for length 4 there are one occurrences, for length 5 there are 3 occurrences, etc".
 
 `group_by()` is somewhat abstract but it is a powerful and efficient way to perform aggregations on a given key. It also works with infinite Observables assuming you use infinite-friendly operators on each `GroupedObservable`. We will use `group_by()` a few more times in this course.
+
+
 # Section VII - Reading and Analyzing data
 
 In this chapter we will look over basic ways to reactively read data and analyze data from text files, URL's, and SQL. We will also integrate concepts we previously learned to create a reactive word counter that runs on a schedule and detects changes to a file.
@@ -1183,7 +1173,7 @@ Delaware
 
 In the map we have to decode the bytes and convert them to UTF-8 Strings. Then we also clean leading and trailing whitespace with `strip()`. then finally we print each line.
 
-## 7.1C (Webcast Only) Recursively Iterating Files in Directories
+## 7.1C Recursively Iterating Files in Directories (EXTRA)
 
 You can use Rx to do powerful recursion patterns to iterate files. You can download and unzip a BBC article datset for this example here, with thousands of articles in text file format: http://mlg.ucd.ie/datasets/bbc.html
 
@@ -1260,7 +1250,7 @@ When you set up your engine, statement, and connection, you can reactively emit 
 from sqlalchemy import create_engine, text
 from rx import Observable
 
-engine = create_engine('sqlite:///C:\\Users\\thoma\\Dropbox\\rexon_metals.db')
+engine = create_engine('sqlite:///C:\\Users\\thomas\\Dropbox\\rexon_metals.db')
 conn = engine.connect()
 
 
@@ -1325,7 +1315,7 @@ Observable.from_([1, 3, 5]) \
 ```
 
 
-## 7.2D - Writing Data (Webcast Only)
+## 7.2D - Writing Data (EXTRA)
 
 You can also use Rx to write data to a database. One way to do this is to put the writing operations in the Subscriber, but you can get a bit more creative and flexible with Rx. For instance, we can create a function called `insert_new_customer()` that accepts the parameters needed to create a new `CUSTOMER` record. But, we can return an `Observable` that emits the automatically assigned PRIMARY KEY value for that record. This allows us to compose writing operations with other operations, such as querying for the record we just created.
 
@@ -1368,8 +1358,6 @@ insert_new_customer('RMS Materials','Northeast', '5764 Carrier Ln', 'Boston', 'M
 (6, 'RMS Materials', 'Northeast', '5764 Carrier Ln', 'Boston', 'Massachusetts', 2201)
 
 ```
-
-
 
 
 ## 7.3 - A Scheduled Reactive Word Counter
@@ -1530,6 +1518,9 @@ Every time the file is edited and words are added, modified, or removed, it shou
 Ideally, it is better to hook onto the change event itself rather than running a potentially expensive process every 3 seconds. We will learn how to do this with Twitter in the next section.
 
 > If you want to see an intensive reactive data analysis example, see my [social media example on Gist](https://goo.gl/NO0Q4P)
+
+
+
 # Section VIII - Hot Observables
 
 In this section we will learn how to create an `Observable` emitting Tweets for a set of topics. We will wrap an `Observable.create()` around the Tweepy API. But first, let's cover multicasting.
@@ -1592,7 +1583,7 @@ Subscriber 2: Epsilon
 
 This is known as multicasting. Notice how the emissions are now interleaved? This is because each emission is going to both subscribers. This is helpful if "replaying" the data is expensive or we just simply want all Subscribers to get the emissions simultaneously.
 
-## 8.1B - Sharing an Interval Observable
+## 8.1B - Sharing an Interval Observable (EXTRA)
 
 `Observable.interval()` is actually a cold Observable too. If one Subscriber subscribes to it, and 5 seconds later another Subscriber comes in, that second subscriber will receive its own emissions that "start over".
 
@@ -1664,7 +1655,7 @@ Subscriber 2: 5
 ```
 
 
-## 8.1C - Autoconnecting
+## 8.1C - Autoconnecting (EXTRA)
 
 We can have our `ConnectableObservable` automatically `connect()` itself when it gets a Subscriber by calling `ref_count()` on it.
 
@@ -1694,7 +1685,7 @@ Again, multicasting is helpful when you want all Subscribers to receive the same
 and prevent redundant, expensive work for each Subscriber.
 
 
-## 8.2D - Multicasting Specific Points (Webcast Only)
+## 8.2D - Multicasting Specific Points (EXTRA)
 
 The placement of the mutlicasting matters. For instance, if you map three emissions to three random integers, but multicast _before_ the `map()` operation, two subscribers will both receive separate random integers.
 
@@ -1782,7 +1773,7 @@ Subscriber 2 Received: 120004
 ```
 
 
-## 8.2E - Subjects (Webcast Only)
+## 8.2E - Subjects (EXTRA)
 
 Another way to create a kmutlicasted `Observable` is by declaring a `Subject`. A `Subject` is both an `Observable` and `Observer`, and you can call its `Observer` functions to push items through it and up to any Subscribers at any time. It will push these items to all subscribers.
 
@@ -1870,15 +1861,15 @@ tweets_for(topics) \
 
 ## 9.1A - Two Long-Running Processes
 
-We will not dive too deep into concurrency topics, but we will learn enough to make it useful and speed up slow processes.
+We will not dive too deep into concurrency topics, but we will learn enough to make it useful and speed up slow processes. Note also the [GIL issue in Python](https://stackoverflow.com/questions/1294382/what-is-a-global-interpreter-lock-gil#1294402) can undermine concurrency performance in Python applications, but hopefully you will still get some marginal benefit. Be sure to test your concurrency strategies and measure what brings the best performance.
 
 > Keep in mind your output may be different than mine, because concurrency tends to shuffle emissions of multiple sources. Output is almost never deterministic when multiple threads are doing work simultaneously and being merged.
 
-Below, we create two Observables we will call "Process 1" and "Process 2". The first Observable is emitting five strings and the other emits numbers in a range.  These Observables will fire quickly when subscribed to, but concurrency is more useful and apparent with long-running tasks. To emulate long-running expensive processes, we will need to exaggerate and slow down emissions. We can use a `intense_calculation()` function that sleeps for a short random duration (between 0.5 to 2.0 seconds) before returning the value it was given. Then we can use this in a `map()` operator for each `Observable`.
+Below, we create two Observables we will call "Task 1" and "Task 2". The first Observable is emitting five strings and the other emits numbers in a range.  These Observables will fire quickly when subscribed to, but concurrency is more useful and apparent with long-running tasks. To emulate long-running expensive processes, we will need to exaggerate and slow down emissions. We can use a `intense_calculation()` function that sleeps for a short random duration (between 0.5 to 2.0 seconds) before returning the value it was given. Then we can use this in a `map()` operator for each `Observable`.
 
 We will use `current_thread().name` to identify the thread that is calling each `on_next()` in the `Subscriber`. Python will label each thread it creates consecutively as "Thread-1", "Thread-2", "Thread-3", etc.
 
-Before "Process 2" can start, it must wait for "Process 1" to call `on_completed()` because by default both are on the `ImmediateScheduler`. This scheduler uses the same `MainThread` that runs our Python program.
+Before "Task 2" can start, it must wait for "Task 1" to call `on_completed()` because by default both are on the `ImmediateScheduler`. This scheduler uses the same `MainThread` that runs our Python program.
 
 
 ```python
@@ -1891,19 +1882,19 @@ def intense_calculation(value):
     time.sleep(random.randint(5,20) * .1)
     return value
 
-# Create Process 1
+# Create TASK 1
 Observable.from_(["Alpha","Beta","Gamma","Delta","Epsilon"]) \
     .map(lambda s: intense_calculation(s)) \
-    .subscribe(on_next=lambda s: print("PROCESS 1: {0} {1}".format(current_thread().name, s)),
+    .subscribe(on_next=lambda s: print("TASK 1: {0} {1}".format(current_thread().name, s)),
                on_error=lambda e: print(e),
-               on_completed=lambda: print("PROCESS 1 done!"))
+               on_completed=lambda: print("TASK 1 done!"))
 
-# Create Process 2
+# Create TASK 2
 Observable.range(1,10) \
     .map(lambda s: intense_calculation(s)) \
-    .subscribe(on_next=lambda i: print("PROCESS 2: {0} {1}".format(current_thread().name, i)),
+    .subscribe(on_next=lambda i: print("TASK 2: {0} {1}".format(current_thread().name, i)),
                on_error=lambda e: print(e),
-               on_completed=lambda: print("PROCESS 2 done!"))
+               on_completed=lambda: print("TASK 2 done!"))
 
 input("Press any key to exit\n")
 ```
@@ -1911,28 +1902,28 @@ input("Press any key to exit\n")
 **OUTPUT (May not match yours):**
 
 ```
-PROCESS 1: MainThread Alpha
-PROCESS 1: MainThread Beta
-PROCESS 1: MainThread Gamma
-PROCESS 1: MainThread Delta
-PROCESS 1: MainThread Epsilon
-PROCESS 1 done!
-PROCESS 2: MainThread 1
-PROCESS 2: MainThread 2
-PROCESS 2: MainThread 3
-PROCESS 2: MainThread 4
-PROCESS 2: MainThread 5
-PROCESS 2: MainThread 6
-PROCESS 2: MainThread 7
-PROCESS 2: MainThread 8
-PROCESS 2: MainThread 9
-PROCESS 2: MainThread 10
-PROCESS 2 done!
+TASK 1: MainThread Alpha
+TASK 1: MainThread Beta
+TASK 1: MainThread Gamma
+TASK 1: MainThread Delta
+TASK 1: MainThread Epsilon
+TASK 1 done!
+TASK 2: MainThread 1
+TASK 2: MainThread 2
+TASK 2: MainThread 3
+TASK 2: MainThread 4
+TASK 2: MainThread 5
+TASK 2: MainThread 6
+TASK 2: MainThread 7
+TASK 2: MainThread 8
+TASK 2: MainThread 9
+TASK 2: MainThread 10
+TASK 2 done!
 ```
 
 ## 9.1B - Kicking off both processes simultaneously
 
-This would go much faster if we kick off both "Process 1" and "Process 2" simultaneously. We can kick off the Subscription in "Process 1" and then immediately move on to kicking off "Process 2". We will kick off both of their subscriptions simultaneously.
+This would go much faster if we kick off both "Task 1" and "Task 2" simultaneously. We can kick off the Subscription in "Task 1" and then immediately move on to kicking off "Task 2". We will kick off both of their subscriptions simultaneously.
 
 In advance, we can create a `ThreadPoolScheduler` that holds a number of threads equaling the _number of CPU's on your computer_ + 1. If your computer has 4 cores, the `ThreadPoolScheduler` will have 5 threads.  The reason for the extra thread is to utilize any idle time of the other threads. To make the Observables work on this `ThreadPoolScheduler`, we can pass it to a `subscribe_on()` operator anywhere in the chain. The `subscribe_on()`, no matter where it is in the chain, will instruct the source Observable what thread to push items on.
 
@@ -1958,21 +1949,21 @@ pool_scheduler = ThreadPoolScheduler(optimal_thread_count)
 
 print("We are using {0} threads".format(optimal_thread_count))
 
-# Create Process 1
+# Create Task 1
 Observable.from_(["Alpha","Beta","Gamma","Delta","Epsilon"]) \
     .map(lambda s: intense_calculation(s)) \
     .subscribe_on(pool_scheduler) \
-    .subscribe(on_next=lambda s: print("PROCESS 1: {0} {1}".format(current_thread().name, s)),
+    .subscribe(on_next=lambda s: print("TASK 1: {0} {1}".format(current_thread().name, s)),
                on_error=lambda e: print(e),
-               on_completed=lambda: print("PROCESS 1 done!"))
+               on_completed=lambda: print("TASK 1 done!"))
 
-# Create Process 2
+# Create Task 2
 Observable.range(1,10) \
     .map(lambda s: intense_calculation(s)) \
     .subscribe_on(pool_scheduler) \
-    .subscribe(on_next=lambda i: print("PROCESS 2: {0} {1}".format(current_thread().name, i)),
+    .subscribe(on_next=lambda i: print("TASK 2: {0} {1}".format(current_thread().name, i)),
                on_error=lambda e: print(e),
-               on_completed=lambda: print("PROCESS 2 done!"))
+               on_completed=lambda: print("TASK 2 done!"))
 
 input("Press any key to exit\n")
 
@@ -1981,35 +1972,35 @@ input("Press any key to exit\n")
 **OUTPUT (May not match yours):**
 
 ```
-PROCESS 1: Thread-1 Alpha
-PROCESS 2: Thread-2 1
-PROCESS 1: Thread-1 Beta
-PROCESS 1: Thread-1 Gamma
-PROCESS 2: Thread-2 2
-PROCESS 2: Thread-2 3
-PROCESS 1: Thread-1 Delta
-PROCESS 2: Thread-2 4
-PROCESS 1: Thread-1 Epsilon
-PROCESS 1 done!
-PROCESS 2: Thread-2 5
-PROCESS 2: Thread-2 6
-PROCESS 2: Thread-2 7
-PROCESS 2: Thread-2 8
-PROCESS 2: Thread-2 9
-PROCESS 2: Thread-2 10
-PROCESS 2 done!
+TASK 1: Thread-1 Alpha
+TASK 2: Thread-2 1
+TASK 1: Thread-1 Beta
+TASK 1: Thread-1 Gamma
+TASK 2: Thread-2 2
+TASK 2: Thread-2 3
+TASK 1: Thread-1 Delta
+TASK 2: Thread-2 4
+TASK 1: Thread-1 Epsilon
+TASK 1 done!
+TASK 2: Thread-2 5
+TASK 2: Thread-2 6
+TASK 2: Thread-2 7
+TASK 2: Thread-2 8
+TASK 2: Thread-2 9
+TASK 2: Thread-2 10
+TASK 2 done!
 ```
 
-We use the `input()` function to hold the `MainThread` and keep the application alive until a key is pressed, allowing the Observables to fire. Notice how the emissions between Process 1 and Process 2 are interleaved, indicating they are both working at the same time. If we did not have the `subscribe_on()` calls, "Process 1" would have to finish before "Process 2" can start, because they both would use the default `ImmediateScheduler` as shown earlier.
+We use the `input()` function to hold the `MainThread` and keep the application alive until a key is pressed, allowing the Observables to fire. Notice how the emissions between Task 1 and Task 2 are interleaved, indicating they are both working at the same time. If we did not have the `subscribe_on()` calls, "Task 1" would have to finish before "Task 2" can start, because they both would use the default `ImmediateScheduler` as shown earlier.
 
-Notice also that "Process 1" requested a thread from our `ThreadPoolScheduler` and got `Thread-1`, and "Process 2" got `Thread 2`. They both will continue to use these threads until `on_completed()` is called on their Subscribers. Then the threads will be given back to the `ThreadPoolScheduler` so they can be used again later.
+Notice also that "Task 1" requested a thread from our `ThreadPoolScheduler` and got `Thread-1`, and "Task 2" got `Thread 2`. They both will continue to use these threads until `on_completed()` is called on their Subscribers. Then the threads will be given back to the `ThreadPoolScheduler` so they can be used again later.
 
 
 ## 9.2 - Using `observe_on()` to redirect in the middle of the chain
 
 Not all source Observables will respect a `subscribe_on()` you specify. This is especially true for time-driven sources like `Observable.interval()` which will use the `TimeoutScheduler` and effectively ignore any `subscribe_on()` you try to call. However, although you cannot instruct the source to emit on a different scheduler, you can specify a different scheduler to be used _at a certain point_ in the `Observable` chain by using `observe_on()`.
 
-Let's create a third process called "Process 3". The source will be an `Observable.interval()` which will emit on the `TimeoutScheduler`. After each emitted number is multiplied by 100, the emission is then moved to the `ThreadPoolScheduler` via the `observe_on()` operator. This means for the remaining operators, the emissions will be passed on the `ThreadPoolScheduler`. Unlike `subscribe_on()`, the placement of `observe_on()` does matter as it will redirect to a different executor _at that point_ in the chain.
+Let's create a third process called "Task 3". The source will be an `Observable.interval()` which will emit on the `TimeoutScheduler`. After each emitted number is multiplied by 100, the emission is then moved to the `ThreadPoolScheduler` via the `observe_on()` operator. This means for the remaining operators, the emissions will be passed on the `ThreadPoolScheduler`. Unlike `subscribe_on()`, the placement of `observe_on()` does matter as it will redirect to a different executor _at that point_ in the chain.
 
 ```python
 from rx import Observable
@@ -2026,26 +2017,26 @@ def intense_calculation(value):
 optimal_thread_count = multiprocessing.cpu_count() + 1
 pool_scheduler = ThreadPoolScheduler(optimal_thread_count)
 
-# Create Process 1
+# Create Task 1
 Observable.from_(["Alpha","Beta","Gamma","Delta","Epsilon"]) \
     .map(lambda s: intense_calculation(s)) \
     .subscribe_on(pool_scheduler) \
-    .subscribe(on_next=lambda s: print("PROCESS 1: {0} {1}".format(current_thread().name, s)),
+    .subscribe(on_next=lambda s: print("TASK 1: {0} {1}".format(current_thread().name, s)),
                on_error=lambda e: print(e),
-              on_completed=lambda: print("PROCESS 1 done!"))
+              on_completed=lambda: print("TASK 1 done!"))
 
-# Create Process 2
+# Create Task 2
 Observable.range(1,10) \
     .map(lambda s: intense_calculation(s)) \
     .subscribe_on(pool_scheduler) \
-    .subscribe(on_next=lambda i: print("PROCESS 2: {0} {1}".format(current_thread().name, i)), on_error=lambda e: print(e), on_completed=lambda: print("PROCESS 2 done!"))
+    .subscribe(on_next=lambda i: print("TASK 2: {0} {1}".format(current_thread().name, i)), on_error=lambda e: print(e), on_completed=lambda: print("TASK 2 done!"))
 
-# Create Process 3, which is infinite
+# Create Task 3, which is infinite
 Observable.interval(1000) \
     .map(lambda i: i * 100) \
     .observe_on(pool_scheduler) \
     .map(lambda s: intense_calculation(s)) \
-    .subscribe(on_next=lambda i: print("PROCESS 3: {0} {1}".format(current_thread().name, i)), on_error=lambda e: print(e))
+    .subscribe(on_next=lambda i: print("TASK 3: {0} {1}".format(current_thread().name, i)), on_error=lambda e: print(e))
 
 input("Press any key to exit\n")
 ```
@@ -2054,38 +2045,38 @@ input("Press any key to exit\n")
 **OUTPUT (May not match yours):**
 
 ```
-PROCESS 2: Thread-2 1
-PROCESS 1: Thread-1 Alpha
-PROCESS 1: Thread-1 Beta
-PROCESS 3: Thread-4 0
-PROCESS 2: Thread-2 2
-PROCESS 1: Thread-1 Gamma
-PROCESS 3: Thread-4 100
-PROCESS 1: Thread-1 Delta
-PROCESS 2: Thread-2 3
-PROCESS 3: Thread-6 200
-PROCESS 1: Thread-1 Epsilon
-PROCESS 1 done!
-PROCESS 3: Thread-13 300
-PROCESS 2: Thread-2 4
-PROCESS 3: Thread-15 400
-PROCESS 2: Thread-2 5
-PROCESS 3: Thread-4 500
-PROCESS 2: Thread-2 6
-PROCESS 3: Thread-4 600
-PROCESS 2: Thread-2 7
-PROCESS 3: Thread-4 700
-PROCESS 2: Thread-2 8
-PROCESS 3: Thread-4 800
-PROCESS 2: Thread-2 9
-PROCESS 3: Thread-4 900
-PROCESS 3: Thread-4 1000
-PROCESS 2: Thread-2 10
-PROCESS 2 done!
-PROCESS 3: Thread-4 1100
-PROCESS 3: Thread-4 1200
-PROCESS 3: Thread-4 1300
-PROCESS 3: Thread-4 1400
+TASK 2: Thread-2 1
+TASK 1: Thread-1 Alpha
+TASK 1: Thread-1 Beta
+TASK 3: Thread-4 0
+TASK 2: Thread-2 2
+TASK 1: Thread-1 Gamma
+TASK 3: Thread-4 100
+TASK 1: Thread-1 Delta
+TASK 2: Thread-2 3
+TASK 3: Thread-6 200
+TASK 1: Thread-1 Epsilon
+TASK 1 done!
+TASK 3: Thread-13 300
+TASK 2: Thread-2 4
+TASK 3: Thread-15 400
+TASK 2: Thread-2 5
+TASK 3: Thread-4 500
+TASK 2: Thread-2 6
+TASK 3: Thread-4 600
+TASK 2: Thread-2 7
+TASK 3: Thread-4 700
+TASK 2: Thread-2 8
+TASK 3: Thread-4 800
+TASK 2: Thread-2 9
+TASK 3: Thread-4 900
+TASK 3: Thread-4 1000
+TASK 2: Thread-2 10
+TASK 2 done!
+TASK 3: Thread-4 1100
+TASK 3: Thread-4 1200
+TASK 3: Thread-4 1300
+TASK 3: Thread-4 1400
 ...
 ```
 
@@ -2116,7 +2107,7 @@ Observable.from_(["Alpha","Beta","Gamma","Delta","Epsilon","Zeta","Eta","Theta",
     .map(lambda s: intense_calculation(s)) \
     .subscribe(on_next=lambda s: print("{0} {1}".format(current_thread().name, s)),
                on_error=lambda e: print(e),
-               on_completed=lambda: print("PROCESS 1 done!"))
+               on_completed=lambda: print("TASK 1 done!"))
 
 
 input("Press any key to exit\n")
@@ -2149,7 +2140,7 @@ Observable.from_(["Alpha","Beta","Gamma","Delta","Epsilon","Zeta","Eta","Theta",
     ) \
     .subscribe(on_next=lambda i: print("{0} {1}".format(current_thread().name, i)),
                on_error=lambda e: print(e),
-               on_completed=lambda: print("PROCESS 1 done!"))
+               on_completed=lambda: print("TASK 1 done!"))
 
 
 input("Press any key to exit\n")
@@ -2238,6 +2229,8 @@ Received Alpha on Thread-2
 
 
 Using `switch_map()` is a convenient way to cancel current work when new work comes in, rather than queuing up work. This is desirable if you are only concerned with the latest data or want to cancel obsolete processing. If you are scraping web data on a schedule using `Observable.interval()`, but a scrape instance takes too long and a new scrape requests comes in, you can cancel that scrape and start the next one.
+
+
 # Appendix
 
 ## 1 - Deferred Observables
