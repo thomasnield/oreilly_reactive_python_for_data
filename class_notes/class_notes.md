@@ -150,7 +150,7 @@ Received: 10
 You can also use `Observable.just()` to emit a single item.
 
 ```python
-from rx import Observable, Observer
+from rx import Observable
 
 greeting = Observable.just("Hello World!")
 
@@ -165,7 +165,7 @@ Received: Hello World!
 
 # 4.2C - Using Observable.empty()
 
-You can also create an `Observable` that emits nothing and call `on_completed()` immediately via `Observable.empty()`. While this may not seem useful, an empty `Observable` is the reactive equivalent to `None`, `null`, or an empty collection so you will encounter it.
+You can also create an `Observable` that emits nothing and call `on_completed()` immediately via `Observable.empty()`. While this may not seem useful, an empty `Observable` is the reactive equivalent to `None`, `null`, or an empty collection.
 
 ```python
 from rx import Observable
@@ -184,7 +184,7 @@ Done!
 
 # 4.3A - Creating an Observable from Scratch
 
-You can also create an `Observable` source from scratch. Using `Observable.create()`. you can pass a function with an `observer` argument, and call it's `on_next()`, `on_completed()`, and `on_error()` to pass items or events to the `Subscriber` or the next operator in the chain.
+You can also create an `Observable` source from scratch. Using `Observable.create()`. you can pass a function with an `observer` argument, and call it's `on_next()`, `on_completed()`, and `on_error()` to pass items or events to the `Observer` or the next operator in the chain.
 
 ```python
 from rx import Observable, Observer
@@ -209,7 +209,7 @@ Observable.create(push_numbers).subscribe(on_next = lambda i: print(i))
 
 ## 4.3B - An Interval Observable
 
-Observables do not have to strictly emit data. They can also emit events. Remember our definition that _events are data, and data are events_? Events and data are treated the same way in ReactiveX. They both can be pushed through an `Observable`.
+Observables do not have to strictly emit data. They can also emit events. Remember our definition that states _events are data, and data are events_? Events and data are treated the same way in ReactiveX. They both can be pushed through an `Observable`.
 
 For instance, we can use `Observable.interval()` to emit a consecutive integer every 1 second.
 
