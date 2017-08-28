@@ -187,7 +187,7 @@ Done!
 You can also create an `Observable` source from scratch. Using `Observable.create()`. you can pass a function with an `observer` argument, and call it's `on_next()`, `on_completed()`, and `on_error()` to pass items or events to the `Observer` or the next operator in the chain.
 
 ```python
-from rx import Observable, Observer
+from rx import Observable
 
 def push_numbers(observer):
     observer.on_next(100)
@@ -221,7 +221,7 @@ Observable.interval(1000) \
     .subscribe(lambda s: print(s))
 
 # Keep application alive until user presses a key
-input("Press any key to quit")
+input("Press any key to quit\r\n")
 ```
 
 
