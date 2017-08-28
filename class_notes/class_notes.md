@@ -456,6 +456,8 @@ Subscriber 2: Epsilon
 ```
 
 However, **hot Observables** will not replay emissions for tardy subscribers that come later. Our Twitter `Observable` is an example of a hot `Observable`. If a second `Subscriber` subscribes to a Tweet feed 5 seconds after the first `Subscriber`, it will miss all Tweets that occurred in that window. We will explore this later.
+
+
 # Part V - Operators
 
 In this section, we will learn some of the 130 operators available in RxPy. Learning these operators can be overwhelming, so the best approach is to seek the right operators out of need. The key to being productive with RxPy and unleashing its potential is to find the key operators that help you with the tasks you encounter. With practice, you will become fluent in composing them together.
@@ -1250,7 +1252,7 @@ When you set up your engine, statement, and connection, you can reactively emit 
 from sqlalchemy import create_engine, text
 from rx import Observable
 
-engine = create_engine('sqlite:///C:\\Users\\thomas\\Dropbox\\rexon_metals.db')
+engine = create_engine('sqlite:///rexon_metals.db')
 conn = engine.connect()
 
 
@@ -1288,7 +1290,7 @@ You can create a single `customer_for_id()` function that returns an `Observable
 from sqlalchemy import create_engine, text
 from rx import Observable
 
-engine = create_engine('sqlite:///C:\\Users\\thoma\\Dropbox\\rexon_metals.db')
+engine = create_engine('sqlite:///rexon_metals.db')
 conn = engine.connect()
 
 def get_all_customers():
@@ -1498,7 +1500,7 @@ article_file = "bbc_news_article.txt"
 
 # create a dict every three seconds, but only push if it changed
 Observable.interval(3000) \
-    .flat_map(lambda i: word_counter_as_dict(article_file))
+    .flat_map(lambda i: word_counter_as_dict(article_file)) \
     .distinct_until_changed() \
     .subscribe(lambda word_ct_dict: print(word_ct_dict))
 
