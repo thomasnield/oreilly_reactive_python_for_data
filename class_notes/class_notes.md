@@ -127,9 +127,9 @@ There are other ways to create an `Observable`. For instance, you can emit a ran
 ```python
 from rx import Observable
 
-letters = Observable.range(1,10)
+source = Observable.range(1,10)
 
-letters.subscribe(lambda value: print(value))
+source.subscribe(lambda value: print(value))
 ```
 
 **OUTPUT:**
@@ -986,6 +986,21 @@ Observable.from_(items) \
 ```
 
 If you do not care about ordering, it is recommend to use `merge_all()` or `flat_map()`. `concat_all()` can behave unpredictably with certain operators like `group_by()`, which we will cover later.
+
+
+You can also use `concat_map()` in the same spirit as `flat_map()`, preserving the order of sequence.
+
+```python
+from rx import Observable
+
+items = ["134/34/235/132/77", "64/22/98/112/86/11", "66/08/34/778/22/12"]
+
+Observable.from_(items) \
+    .concat_map(lambda s: Observable.from_(s.split("/"))) \
+    .map(lambda s: int(s)) \
+    .subscribe(lambda i: print(i))
+```
+
 
 ## 6.2C - Zip
 
@@ -1946,7 +1961,7 @@ def intense_calculation(value):
     return value
 
 # calculate number of CPU's and add 1, then create a ThreadPoolScheduler with that number of threads
-optimal_thread_count = multiprocessing.cpu_count() + 1
+optimal_thread_count = multiprocessing.cpu_count()
 pool_scheduler = ThreadPoolScheduler(optimal_thread_count)
 
 print("We are using {0} threads".format(optimal_thread_count))
@@ -2194,7 +2209,7 @@ def intense_calculation(value):
     return value
 
 # calculate number of CPU's and add 1, then create a ThreadPoolScheduler with that number of threads
-optimal_thread_count = multiprocessing.cpu_count() + 1
+optimal_thread_count = multiprocessing.cpu_count()
 pool_scheduler = ThreadPoolScheduler(optimal_thread_count)
 
 strings = Observable.from_(["Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta", "Iota", "Kappa"])
