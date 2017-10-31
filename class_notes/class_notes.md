@@ -1168,7 +1168,7 @@ def read_request(link):
     f = urlopen(link)
 
     return Observable.from_(f) \
-        .map(lambda s: s.decode("utf-8").strip()) \
+        .map(lambda s: s.decode("utf-8").strip())
 
 read_request("https://goo.gl/rIaDyM") \
     .subscribe(lambda s: print(s))
@@ -1289,7 +1289,31 @@ get_all_customers().subscribe(lambda r: print(r))
 (5, 'Marsh Lane Metal Works', 'Southeast', '9143 Marsh Ln', 'Avondale', 'LA', 79782)
 ```
 
-### 7.2B - Merging multiple queries
+### 7.2B - Using Observable.defer()
+
+If you need multiple subscribers for sources that can only be iterated once, use `Observable.defer()` to generate a new iterable object for each subscription.
+
+```python
+from sqlalchemy import create_engine, text
+from rx import Observable
+
+engine = create_engine('sqlite:///rexon_metals.db')
+conn = engine.connect()
+
+
+def get_all_customers():
+    stmt = text("SELECT * FROM CUSTOMER")
+    return Observable.defer(lambda: Observable.from_(conn.execute(stmt)))
+
+my_source = get_all_customers()
+
+my_source.subscribe(lambda r: print(r))
+my_source.subscribe(lambda r: print(r))
+```
+
+
+
+### 7.2C - Merging multiple queries
 
 You can create some powerful reactive patterns when working with databases. For instance, say you wanted to query for customers with ID's 1, 3, and 5. Of course you can do this in raw SQL like so:
 
@@ -1672,7 +1696,7 @@ Subscriber 2: 5
 ```
 
 
-## 8.1C - Autoconnecting (EXTRA)
+## 8.1C - Autoconnecting
 
 We can have our `ConnectableObservable` automatically `connect()` itself when it gets a Subscriber by calling `ref_count()` on it.
 
@@ -1681,7 +1705,7 @@ We can have our `ConnectableObservable` automatically `connect()` itself when it
 from rx import Observable
 import time
 
-source = Observable.interval(1000).publish().ref_count()
+source = Observable.interval(1000).publish().auto_connect()
 
 source.subscribe(lambda s: print("Subscriber 1: {0}".format(s)))
 
@@ -1692,17 +1716,17 @@ source.subscribe(lambda s: print("Subscriber 2: {0}".format(s)))
 input("Press any key to exit\n")
 ```
 
-You can also call an alias for `publish().ref_count()` by calling `share()` instead.
+You can also pass the number of subscribers to wait for to `auto_connect()` before it starts firing.
 
 ```python
-source = Observable.interval(1000).share()
+source = Observable.interval(1000).auto_connect()
 ```
 
 Again, multicasting is helpful when you want all Subscribers to receive the same emissions simultaneously
 and prevent redundant, expensive work for each Subscriber.
 
 
-## 8.2D - Multicasting Specific Points (EXTRA)
+## 8.2D - Multicasting Specific Points
 
 The placement of the mutlicasting matters. For instance, if you map three emissions to three random integers, but multicast _before_ the `map()` operation, two subscribers will both receive separate random integers.
 
@@ -2146,8 +2170,8 @@ def intense_calculation(value):
     time.sleep(random.randint(5,20) * .1)
     return value
 
-# calculate number of CPU's and add 1, then create a ThreadPoolScheduler with that number of threads
-optimal_thread_count = multiprocessing.cpu_count() + 1
+# calculate number of CPU's, then create a ThreadPoolScheduler with that number of threads
+optimal_thread_count = multiprocessing.cpu_count()
 pool_scheduler = ThreadPoolScheduler(optimal_thread_count)
 
 # Create Parallel Process
